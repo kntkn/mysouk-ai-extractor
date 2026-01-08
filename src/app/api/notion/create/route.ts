@@ -9,13 +9,26 @@ if (!rawToken) {
   throw new Error('NOTION_API_TOKEN environment variable is not set');
 }
 
-// Remove ALL whitespace characters including newlines, carriage returns, and "y\n" prefix
-const sanitizedToken = rawToken
-  .replace(/^y\n/, '') // Remove "y\n" prefix if present
-  .replace(/[\r\n\t\s]/g, ''); // Remove all whitespace characters
+// Aggressively clean the token - handle any possible format issues
+let cleanToken = rawToken;
+
+// Remove any "y\n" prefix
+if (cleanToken.startsWith('y\n')) {
+  cleanToken = cleanToken.slice(2);
+}
+
+// Remove all types of whitespace and control characters
+cleanToken = cleanToken.replace(/[\r\n\t\s\x00-\x1f\x7f]/g, '');
+
+// Ensure it starts with "ntn_"
+if (!cleanToken.startsWith('ntn_')) {
+  throw new Error(`Invalid token format. Token should start with 'ntn_', but got: ${cleanToken.slice(0, 10)}...`);
+}
+
+console.log(`Token length: ${cleanToken.length}, starts with: ${cleanToken.slice(0, 10)}`);
 
 const notion = new Client({
-  auth: sanitizedToken,
+  auth: cleanToken,
 });
 
 export async function POST(request: NextRequest) {
