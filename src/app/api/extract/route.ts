@@ -242,7 +242,7 @@ async function normalizeExtractedData(
   // Process each field in the raw data
   for (const [fieldKey, fieldData] of Object.entries(rawData)) {
     if (typeof fieldData === 'object' && fieldData !== null && 'value' in fieldData) {
-      const normalizer = fieldNormalizers[fieldKey];
+      const normalizer = fieldNormalizers[fieldKey as keyof typeof fieldNormalizers];
       const normalizedValue = normalizer ? normalizer(fieldData.value) : fieldData.value;
       
       normalized[fieldKey] = {
