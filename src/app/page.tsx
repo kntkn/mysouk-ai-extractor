@@ -22,6 +22,7 @@ export default function HomePage() {
         { id: 'normalize', name: 'データ正規化', status: 'pending', progress: 0 },
         { id: 'images', name: '画像抽出・分類', status: 'pending', progress: 0 },
         { id: 'notion', name: 'Notionページ作成', status: 'pending', progress: 0 },
+        { id: 'pdf', name: 'PDFレポート生成', status: 'pending', progress: 0 },
         { id: 'complete', name: '完了', status: 'pending', progress: 0 },
       ],
       files: [],
@@ -406,8 +407,8 @@ async function processFiles(
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    // Process remaining steps (normalize, images, notion, complete)
-    const remainingSteps = ['normalize', 'images', 'notion', 'complete'];
+    // Process remaining steps (normalize, images, notion, pdf, complete)
+    const remainingSteps = ['normalize', 'images', 'notion', 'pdf', 'complete'];
     for (const stepId of remainingSteps) {
       const step = steps.find(s => s.id === stepId);
       if (step) {
@@ -614,6 +615,88 @@ async function processFiles(
             message: `画像抽出・分類完了: ${allExtractedImages.length}枚処理`,
             details: { imageTypeStats }
           }]);
+
+        } else if (stepId === 'pdf') {
+          // Real PDF generation
+          try {
+            setLogs(prev => [...prev, {
+              id: `log-${Date.now()}-pdf-start`,
+              timestamp: Date.now(),
+              level: 'info',
+              message: 'A4縦型PDFレポートを生成中...',
+            }]);
+
+            step.progress = 25;
+            setSession({ ...session });
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const pdfResponse = await fetch('/api/pdf/generate', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                sessionId: session.id,
+                listings: extractedListings,
+                files: session.files,
+              }),
+            });
+
+            step.progress = 75;
+            setSession({ ...session });
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            if (pdfResponse.ok) {
+              const pdfResult = await pdfResponse.json();
+              
+              if (pdfResult.success) {
+                // Store PDF URL in session for download
+                session.reportUrl = pdfResult.reportUrl;
+                session.reportFileName = pdfResult.fileName;
+                
+                step.evidence = `PDF生成完了: ${pdfResult.fileName}`;
+                
+                setLogs(prev => [...prev, {
+                  id: `log-${Date.now()}-pdf-success`,
+                  timestamp: Date.now(),
+                  level: 'success',
+                  message: `✓ PDFレポート生成完了: ${pdfResult.fileName}`,
+                  details: { 
+                    reportUrl: pdfResult.reportUrl,
+                    listingCount: pdfResult.listingCount 
+                  }
+                }]);
+              } else {
+                setLogs(prev => [...prev, {
+                  id: `log-${Date.now()}-pdf-error`,
+                  timestamp: Date.now(),
+                  level: 'warn',
+                  message: `⚠ PDF生成失敗: ${pdfResult.error}`,
+                }]);
+                
+                step.evidence = 'PDF生成に失敗';
+              }
+            } else {
+              const errorText = await pdfResponse.text();
+              setLogs(prev => [...prev, {
+                id: `log-${Date.now()}-pdf-error`,
+                timestamp: Date.now(),
+                level: 'error',
+                message: `PDF生成API エラー: ${errorText}`,
+              }]);
+              
+              step.evidence = 'PDF生成エラー';
+            }
+          } catch (pdfError) {
+            setLogs(prev => [...prev, {
+              id: `log-${Date.now()}-pdf-error`,
+              timestamp: Date.now(),
+              level: 'error',
+              message: `PDF生成エラー: ${pdfError.message}`,
+            }]);
+            
+            step.evidence = 'PDF生成エラー';
+          }
 
         } else {
           // Simulate other steps

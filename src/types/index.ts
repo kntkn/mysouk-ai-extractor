@@ -77,6 +77,8 @@ export interface ProcessingSession {
   status: 'uploading' | 'processing' | 'completed' | 'error';
   startTime: number;
   endTime?: number;
+  reportUrl?: string;
+  reportFileName?: string;
 }
 
 export interface ProcessedFile {

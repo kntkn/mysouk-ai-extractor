@@ -421,11 +421,21 @@ export default function ResultPanel({ session }: ResultPanelProps) {
                   
                   <button 
                     onClick={() => {
-                      alert('PDF出力機能は近日実装予定です');
+                      if (session.reportUrl) {
+                        // Open PDF in new tab
+                        window.open(session.reportUrl, '_blank');
+                      } else {
+                        alert('PDFレポートが生成されていません。処理が完了するまでお待ちください。');
+                      }
                     }}
-                    className="px-4 py-2 bg-white text-green-600 border border-green-600 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
+                    className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+                      session.reportUrl 
+                        ? 'bg-white text-green-600 border border-green-600 hover:bg-green-50' 
+                        : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                    }`}
+                    disabled={!session.reportUrl}
                   >
-                    PDF出力
+                    {session.reportUrl ? 'PDF出力' : 'PDF生成中...'}
                   </button>
                 </>
               );
