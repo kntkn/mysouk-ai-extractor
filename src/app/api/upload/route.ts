@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { v4 as uuidv4 } from 'uuid';
-import pdfParse from 'pdf-parse';
+import * as pdfParse from 'pdf-parse';
 
 export async function POST(request: NextRequest) {
   try {
