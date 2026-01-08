@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Client } from '@notionhq/client';
 import { PropertyListing, NotionPageCreationResult } from '@/types';
 
-// Sanitize the Notion API token to remove any whitespace/newlines
-const sanitizedToken = process.env.NOTION_API_TOKEN?.trim();
+// Debug and sanitize the Notion API token
+const rawToken = process.env.NOTION_API_TOKEN;
 
-if (!sanitizedToken) {
+if (!rawToken) {
   throw new Error('NOTION_API_TOKEN environment variable is not set');
 }
+
+// Remove ALL whitespace characters including newlines, carriage returns, and "y\n" prefix
+const sanitizedToken = rawToken
+  .replace(/^y\n/, '') // Remove "y\n" prefix if present
+  .replace(/[\r\n\t\s]/g, ''); // Remove all whitespace characters
 
 const notion = new Client({
   auth: sanitizedToken,
