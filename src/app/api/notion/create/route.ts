@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Client } from '@notionhq/client';
 import { PropertyListing, NotionPageCreationResult } from '@/types';
 
+// Sanitize the Notion API token to remove any whitespace/newlines
+const sanitizedToken = process.env.NOTION_API_TOKEN?.trim();
+
+if (!sanitizedToken) {
+  throw new Error('NOTION_API_TOKEN environment variable is not set');
+}
+
 const notion = new Client({
-  auth: process.env.NOTION_API_TOKEN!,
+  auth: sanitizedToken,
 });
 
 export async function POST(request: NextRequest) {
