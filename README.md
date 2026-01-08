@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# マイソクAI抽出システム
 
-## Getting Started
+マイソクPDFをドラッグ&ドロップで投入すると、AIが物件情報を抽出し、Notionデータベースに美しい縦型ページを自動生成するWebアプリです。
 
-First, run the development server:
+## ✨ 主要機能
+
+- **複数PDFの一括処理** - 1つのPDFに複数物件が含まれる場合も自動検出・分割
+- **リアルタイム進捗表示** - 処理工程をステップバーとストリーミングログで可視化
+- **AI抽出エンジン** - Claude 3.5 Sonnetで高精度な情報抽出
+- **Notion自動連携** - 指定データベースに縦型レイアウトでページ作成
+- **画像自動抽出・分類** - 間取り図、内装、外装写真を自動分類
+- **検証UX** - confidence表示、根拠提示、要確認ハイライト
+- **A4縦PDF生成** - Notionページと同じ内容でPDF出力
+
+## 🚀 セットアップ
+
+### 1. 環境変数設定
+
+`.env.local` に以下を設定：
+
+```env
+# Anthropic Claude API
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+
+# Notion API
+NOTION_API_KEY=your_notion_api_key_here
+NOTION_DATABASE_ID=your_notion_database_id_here
+
+# Vercel Blob Storage
+BLOB_READ_WRITE_TOKEN=your_vercel_blob_token_here
+
+# App Configuration
+APP_BASE_URL=http://localhost:3000
+```
+
+### 2. 依存関係インストール
+
+```bash
+npm install
+```
+
+### 3. 開発サーバー起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで http://localhost:3000 を開く
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔄 処理フロー
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **受付** - PDF複数ファイルをドラッグ&ドロップ
+2. **PDF解析** - ページ数、基本構造を分析
+3. **物件検出/分割** - 1PDF内の複数物件を検出・分割
+4. **抽出** - Claude APIで各物件の詳細情報を抽出
+5. **正規化** - 数値変換、フォーマット統一
+6. **画像抽出/分類** - 間取り図と写真の自動分類
+7. **Notion反映** - データベースにページ作成
+8. **完了** - 作成ページURLの表示
 
-## Learn More
+## 🛠️ 技術スタック
 
-To learn more about Next.js, take a look at the following resources:
+- **Frontend**: Next.js 15 + TypeScript + Tailwind CSS
+- **AI**: Anthropic Claude 3.5 Sonnet
+- **Database**: Notion API
+- **Storage**: Vercel Blob
+- **PDF処理**: pdf-parse + pdf2pic
+- **画像処理**: Sharp
+- **PDF生成**: Playwright
+- **Hosting**: Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 プロジェクト構造
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/              # Next.js App Router
+├── components/       # React コンポーネント
+├── lib/             # ライブラリとユーティリティ
+├── types/           # TypeScript型定義
+├── utils/           # ヘルパー関数
+└── api/             # API エンドポイント
+```
