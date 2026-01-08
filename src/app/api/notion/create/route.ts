@@ -56,13 +56,21 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    console.log('=== Starting Notion page creation ===');
+    console.log('Listing received:', JSON.stringify(listing, null, 2));
+    
     const notion = getNotionClient();
+    console.log('Notion client created successfully');
 
     // Validate database schema
+    console.log('Starting database validation...');
     await validateDatabaseSchema(dbId, notion);
+    console.log('Database validation completed');
 
     // Create Notion page
+    console.log('Starting page creation...');
     const result = await createNotionPage(listing, dbId, notion);
+    console.log('Page creation completed');
 
     return NextResponse.json(result);
 
