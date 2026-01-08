@@ -83,9 +83,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Upload error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ 
       success: false, 
-      error: `アップロードエラー: ${error.message}` 
+      error: `アップロードエラー: ${errorMessage}` 
     }, { status: 500 });
   }
 }

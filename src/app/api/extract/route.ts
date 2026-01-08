@@ -29,9 +29,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Extract error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ 
       success: false, 
-      error: `抽出エラー: ${error.message}` 
+      error: `抽出エラー: ${errorMessage}` 
     }, { status: 500 });
   }
 }

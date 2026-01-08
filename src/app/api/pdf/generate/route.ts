@@ -50,9 +50,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('PDF generation error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ 
       success: false, 
-      error: `PDF生成エラー: ${error.message}` 
+      error: `PDF生成エラー: ${errorMessage}` 
     }, { status: 500 });
   }
 }

@@ -50,9 +50,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Image extraction error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ 
       success: false, 
-      error: `画像抽出エラー: ${error.message}` 
+      error: `画像抽出エラー: ${errorMessage}` 
     }, { status: 500 });
   }
 }
@@ -115,14 +116,16 @@ async function extractImagesFromPDF(
           console.log(`Extracted page ${result.page} from ${fileName}`);
 
         } catch (uploadError) {
-          console.error(`Failed to process page ${result.page}:`, uploadError);
+          const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
+          console.error(`Failed to process page ${result.page}:`, errorMessage);
         }
       }
     }
 
   } catch (conversionError) {
-    console.error('PDF to image conversion error:', conversionError);
-    throw new Error(`PDF画像変換に失敗: ${conversionError.message}`);
+    const errorMessage = conversionError instanceof Error ? conversionError.message : String(conversionError);
+    console.error('PDF to image conversion error:', errorMessage);
+    throw new Error(`PDF画像変換に失敗: ${errorMessage}`);
   }
 
   return images;

@@ -372,11 +372,12 @@ async function processFiles(
             }
 
           } catch (extractError) {
+            const errorMessage = extractError instanceof Error ? extractError.message : String(extractError);
             setLogs(prev => [...prev, {
               id: `log-${Date.now()}-extract-error`,
               timestamp: Date.now(),
               level: 'error',
-              message: `${candidate.物件名}の抽出エラー: ${extractError.message}`,
+              message: `${candidate.物件名}の抽出エラー: ${errorMessage}`,
             }]);
           }
 
@@ -580,11 +581,12 @@ async function processFiles(
                 file.images = [];
               }
             } catch (imageError) {
+              const errorMessage = imageError instanceof Error ? imageError.message : String(imageError);
               setLogs(prev => [...prev, {
                 id: `log-${Date.now()}-images-error`,
                 timestamp: Date.now(),
                 level: 'error',
-                message: `画像抽出エラー: ${imageError.message}`,
+                message: `画像抽出エラー: ${errorMessage}`,
               }]);
               
               file.images = [];
@@ -688,11 +690,12 @@ async function processFiles(
               step.evidence = 'PDF生成エラー';
             }
           } catch (pdfError) {
+            const errorMessage = pdfError instanceof Error ? pdfError.message : String(pdfError);
             setLogs(prev => [...prev, {
               id: `log-${Date.now()}-pdf-error`,
               timestamp: Date.now(),
               level: 'error',
-              message: `PDF生成エラー: ${pdfError.message}`,
+              message: `PDF生成エラー: ${errorMessage}`,
             }]);
             
             step.evidence = 'PDF生成エラー';
