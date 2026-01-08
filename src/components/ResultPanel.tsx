@@ -90,7 +90,7 @@ export default function ResultPanel({ session }: ResultPanelProps) {
         <h4 className="font-semibold text-gray-900 mb-3">検出された物件</h4>
         {session.listings.length > 0 ? (
           <div className="space-y-4">
-            {session.listings.map((listing, index) => (
+            {session.listings.map((listing: any, index) => (
               <div key={index} className="border rounded-lg overflow-hidden">
                 {/* Header */}
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b">
@@ -172,10 +172,10 @@ export default function ResultPanel({ session }: ResultPanelProps) {
                     <h6 className="font-medium text-gray-900 mb-2">抽出品質</h6>
                     <div className="flex flex-wrap gap-1">
                       {Object.entries(listing)
-                        .filter(([_, field]) => field && field.confidence > 0)
-                        .sort(([,a], [,b]) => b.confidence - a.confidence)
+                        .filter(([_, field]: [string, any]) => field && field.confidence > 0)
+                        .sort(([,a]: [string, any], [,b]: [string, any]) => b.confidence - a.confidence)
                         .slice(0, 8)
-                        .map(([key, field]) => {
+                        .map(([key, field]: [string, any]) => {
                           const confidence = field.confidence || 0;
                           return (
                             <span 
@@ -196,7 +196,7 @@ export default function ResultPanel({ session }: ResultPanelProps) {
                   </div>
 
                   {/* Low confidence items */}
-                  {Object.entries(listing).some(([_, field]) => field && field.confidence > 0 && field.confidence < 0.6) && (
+                  {Object.entries(listing).some(([_, field]: [string, any]) => field && field.confidence > 0 && field.confidence < 0.6) && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                       <h6 className="font-medium text-yellow-800 mb-2 flex items-center gap-2">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -206,8 +206,8 @@ export default function ResultPanel({ session }: ResultPanelProps) {
                       </h6>
                       <div className="space-y-1 text-sm">
                         {Object.entries(listing)
-                          .filter(([_, field]) => field && field.confidence > 0 && field.confidence < 0.6)
-                          .map(([key, field]) => (
+                          .filter(([_, field]: [string, any]) => field && field.confidence > 0 && field.confidence < 0.6)
+                          .map(([key, field]: [string, any]) => (
                             <div key={key} className="text-yellow-800">
                               <span className="font-medium">{key}</span>: {String(field.value)} 
                               <span className="text-xs text-yellow-600 ml-2">
@@ -273,7 +273,7 @@ export default function ResultPanel({ session }: ResultPanelProps) {
                   </span>
                 </div>
 
-                {Object.entries(imagesByType).map(([type, images]: [string, any[]]) => (
+                {(Object.entries(imagesByType) as [string, any[]][]).map(([type, images]) => (
                   <div key={type} className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-medium text-gray-700">
@@ -322,8 +322,8 @@ export default function ResultPanel({ session }: ResultPanelProps) {
                 <div className="bg-gray-50 rounded-lg p-3 mt-3">
                   <h6 className="text-sm font-medium text-gray-900 mb-2">分類統計</h6>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(imagesByType).map(([type, images]: [string, any[]]) => {
-                      const avgConfidence = images.reduce((sum, img) => sum + img.confidence, 0) / images.length;
+                    {(Object.entries(imagesByType) as [string, any[]][]).map(([type, images]) => {
+                      const avgConfidence = images.reduce((sum: number, img: any) => sum + img.confidence, 0) / images.length;
                       return (
                         <span key={type} className="text-xs bg-white px-2 py-1 rounded border">
                           {typeLabels[type] || type}: {images.length}枚 

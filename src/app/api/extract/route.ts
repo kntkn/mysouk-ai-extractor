@@ -247,11 +247,11 @@ async function normalizeExtractedData(
       
       normalized[fieldKey] = {
         value: normalizedValue,
-        confidence: Math.max(0, Math.min(1, fieldData.confidence || 0)),
+        confidence: Math.max(0, Math.min(1, (fieldData as any).confidence || 0)),
         evidence: {
           pageIndex,
-          snippet: typeof fieldData.evidence === 'string' 
-            ? fieldData.evidence.substring(0, 150) 
+          snippet: typeof (fieldData as any).evidence === 'string' 
+            ? (fieldData as any).evidence.substring(0, 150) 
             : `ページ${pageIndex + 1}から抽出`
         }
       };
@@ -279,7 +279,7 @@ function createFallbackListing(
   for (const [field, pattern] of Object.entries(patterns)) {
     const match = candidateText.match(pattern);
     if (match) {
-      let value = match[1].trim();
+      let value: any = match[1].trim();
       
       // Basic normalization for numeric fields
       if (field === '賃料') {

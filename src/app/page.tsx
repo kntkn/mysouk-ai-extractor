@@ -226,6 +226,9 @@ async function processFiles(
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
+    // Shared variable for extracted listings
+    let extractedListings: any[] = [];
+
     // Step 2: Parse PDF Content
     const parseStep = steps.find(s => s.id === 'parse');
     if (parseStep) {
@@ -317,12 +320,11 @@ async function processFiles(
       }]);
 
       // Extract information from each detected candidate
-      const extractedListings = [];
       const totalCandidates = session.files.reduce((sum, f) => sum + f.candidates.length, 0);
       let processedCandidates = 0;
 
       for (const file of session.files) {
-        for (const candidate of file.candidates) {
+        for (const candidate of file.candidates as any[]) {
           try {
             setLogs(prev => [...prev, {
               id: `log-${Date.now()}-extract-item`,
@@ -485,7 +487,7 @@ async function processFiles(
                 id: `log-${Date.now()}-notion-error`,
                 timestamp: Date.now(),
                 level: 'error',
-                message: `Notion作成エラー: ${notionError.message}`,
+                message: `Notion作成エラー: ${notionError instanceof Error ? notionError.message : String(notionError)}`,
               }]);
             }
 
@@ -755,7 +757,7 @@ async function processFiles(
       id: `error-${Date.now()}`,
       timestamp: Date.now(),
       level: 'error',
-      message: `エラーが発生しました: ${error.message}`,
+      message: `エラーが発生しました: ${error instanceof Error ? error.message : String(error)}`,
     }]);
   }
 }

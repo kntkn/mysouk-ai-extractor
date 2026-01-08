@@ -46,7 +46,7 @@ export interface ExtractionResult<T = any> {
   };
 }
 
-export interface PropertyListing {
+export type PropertyListing = {
   [K in keyof NotionPropertySchema]: ExtractionResult<NotionPropertySchema[K]>;
 }
 

@@ -71,7 +71,7 @@ async function validateDatabaseSchema(databaseId: string) {
     });
 
     // Check if database has essential properties
-    const properties = response.properties;
+    const properties = (response as any).properties;
     const requiredProperties = [
       '物件名', '所在地', '賃料', '間取り', '専有面積', 
       '管理費共益費', '敷金月数', '礼金月数'
@@ -108,7 +108,7 @@ async function createNotionPage(
     return {
       success: true,
       pageId: response.id,
-      pageUrl: response.url
+      pageUrl: (response as any).url
     };
 
   } catch (error) {
@@ -117,7 +117,7 @@ async function createNotionPage(
   }
 }
 
-function buildNotionProperties(listing: PropertyListing) {
+function buildNotionProperties(listing: any) {
   const properties: any = {};
 
   // Title property (物件名)

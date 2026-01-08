@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { v4 as uuidv4 } from 'uuid';
-import * as pdfParse from 'pdf-parse';
+const pdfParse = require('pdf-parse');
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
         // For now, skip image conversion and focus on text analysis
         // TODO: Implement PDF to image conversion in next phase
-        const images = [];
+        const images: any[] = [];
 
         // Detect potential property listings in each page
         const candidates = await detectListingCandidates(
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
           pages: 0,
           candidates: [],
           images: [],
-          error: `ファイル処理エラー: ${fileError.message}`,
+          error: `ファイル処理エラー: ${fileError instanceof Error ? fileError.message : String(fileError)}`,
         });
       }
     }
@@ -166,7 +166,7 @@ function generateListingKey(propertyName: string, address: string, rent: number)
 // Group listing candidates by property (deduplication)
 async function groupListingsByProperty(files: any[]) {
   const allCandidates = files.flatMap(file => 
-    file.candidates.map(candidate => ({
+    file.candidates.map((candidate: any) => ({
       ...candidate,
       fileId: file.id,
       fileName: file.name
@@ -184,18 +184,18 @@ async function groupListingsByProperty(files: any[]) {
   }, {} as Record<string, any[]>);
 
   // Create consolidated listings
-  const groupedListings = Object.values(groups).map(candidates => {
+  const groupedListings = Object.values(groups).map((candidates: any) => {
     // Use the candidate with the most text content as the primary
-    const primary = candidates.reduce((best, current) => 
+    const primary = candidates.reduce((best: any, current: any) => 
       (current.textContent?.length || 0) > (best.textContent?.length || 0) ? current : best
     );
 
     return {
       id: uuidv4(),
       primary,
-      duplicates: candidates.filter(c => c !== primary),
-      pageIndexes: candidates.map(c => c.pageIndex),
-      fileIds: candidates.map(c => c.fileId),
+      duplicates: candidates.filter((c: any) => c !== primary),
+      pageIndexes: candidates.map((c: any) => c.pageIndex),
+      fileIds: candidates.map((c: any) => c.fileId),
       confidence: candidates.length > 1 ? 0.9 : 0.7, // Higher confidence if found in multiple pages
     };
   });
