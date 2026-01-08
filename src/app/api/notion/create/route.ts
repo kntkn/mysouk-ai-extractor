@@ -150,6 +150,7 @@ async function createNotionPage(
 }
 
 function buildNotionProperties(listing: any) {
+  console.log('Building properties for listing:', JSON.stringify(listing, null, 2));
   const properties: any = {};
 
   // Title property (物件名)
@@ -421,5 +422,6 @@ function buildNotionProperties(listing: any) {
     };
   }
 
+  console.log('Built properties:', JSON.stringify(properties, null, 2));
   return properties;
 }
