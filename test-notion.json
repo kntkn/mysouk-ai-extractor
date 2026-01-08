@@ -1,0 +1,28 @@
+{
+  "listing": {
+    "物件名": {
+      "value": "テストマンション",
+      "confidence": 0.9,
+      "evidence": {
+        "pageIndex": 0,
+        "snippet": "物件名: テストマンション"
+      }
+    },
+    "所在地": {
+      "value": "東京都渋谷区",
+      "confidence": 0.8,
+      "evidence": {
+        "pageIndex": 0,
+        "snippet": "所在地: 東京都渋谷区"
+      }
+    },
+    "賃料": {
+      "value": 120000,
+      "confidence": 0.9,
+      "evidence": {
+        "pageIndex": 0,
+        "snippet": "賃料: 120,000円"
+      }
+    }
+  }
+}
