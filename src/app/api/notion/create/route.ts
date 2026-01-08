@@ -26,7 +26,7 @@ function getNotionClient() {
     throw new Error(`Invalid token format. Token should start with 'ntn_', but got: ${cleanToken.slice(0, 10)}...`);
   }
 
-  console.log(`Token length: ${cleanToken.length}, starts with: ${cleanToken.slice(0, 10)}`);
+  // Token validated successfully
 
   return new Client({
     auth: cleanToken,
@@ -56,22 +56,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('=== Starting Notion page creation ===');
-    console.log('Listing received:', JSON.stringify(listing, null, 2));
-    
     const notion = getNotionClient();
-    console.log('Notion client created successfully');
-
-    // Temporarily skip database validation due to permission issues
-    console.log('Skipping database validation (permission issues)');
-    
-    // TODO: Re-enable validation once token permissions are sorted
-    // await validateDatabaseSchema(dbId, notion);
 
     // Create Notion page
-    console.log('Starting page creation...');
     const result = await createNotionPage(listing, dbId, notion);
-    console.log('Page creation completed');
 
     return NextResponse.json(result);
 
@@ -160,7 +148,6 @@ async function createNotionPage(
 }
 
 function buildNotionProperties(listing: any) {
-  console.log('Building properties for listing:', JSON.stringify(listing, null, 2));
   const properties: any = {};
 
   // Title property (物件名)
@@ -432,6 +419,5 @@ function buildNotionProperties(listing: any) {
     };
   }
 
-  console.log('Built properties:', JSON.stringify(properties, null, 2));
   return properties;
 }
