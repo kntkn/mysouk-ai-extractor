@@ -406,7 +406,7 @@ async function processFiles(
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    // Simulate remaining steps (normalize, images, notion, complete)
+    // Process remaining steps (normalize, images, notion, complete)
     const remainingSteps = ['normalize', 'images', 'notion', 'complete'];
     for (const stepId of remainingSteps) {
       const step = steps.find(s => s.id === stepId);
@@ -422,23 +422,107 @@ async function processFiles(
           message: `${step.name}を開始...`,
         }]);
 
-        // Quick simulation for demo
-        for (let progress = 0; progress <= 100; progress += 50) {
-          step.progress = progress;
-          setSession({ ...session });
-          await new Promise(resolve => setTimeout(resolve, 300));
+        if (stepId === 'notion') {
+          // Real Notion integration
+          let successfulCreations = 0;
+          const totalListings = extractedListings.length;
+
+          for (let i = 0; i < totalListings; i++) {
+            const listing = extractedListings[i];
+            
+            try {
+              setLogs(prev => [...prev, {
+                id: `log-${Date.now()}-notion-create`,
+                timestamp: Date.now(),
+                level: 'info',
+                message: `Notionページ作成中: ${listing.物件名?.value || `物件${i + 1}`}`,
+              }]);
+
+              const notionResponse = await fetch('/api/notion/create', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  listing,
+                }),
+              });
+
+              if (notionResponse.ok) {
+                const notionResult = await notionResponse.json();
+                
+                if (notionResult.success) {
+                  successfulCreations++;
+                  
+                  setLogs(prev => [...prev, {
+                    id: `log-${Date.now()}-notion-success`,
+                    timestamp: Date.now(),
+                    level: 'success',
+                    message: `✓ Notionページ作成完了: ${listing.物件名?.value || `物件${i + 1}`}`,
+                    details: { pageUrl: notionResult.pageUrl }
+                  }]);
+                } else {
+                  setLogs(prev => [...prev, {
+                    id: `log-${Date.now()}-notion-error`,
+                    timestamp: Date.now(),
+                    level: 'warn',
+                    message: `⚠ Notionページ作成失敗: ${notionResult.error}`,
+                  }]);
+                }
+              } else {
+                const errorText = await notionResponse.text();
+                setLogs(prev => [...prev, {
+                  id: `log-${Date.now()}-notion-error`,
+                  timestamp: Date.now(),
+                  level: 'error',
+                  message: `Notion API エラー: ${errorText}`,
+                }]);
+              }
+            } catch (notionError) {
+              setLogs(prev => [...prev, {
+                id: `log-${Date.now()}-notion-error`,
+                timestamp: Date.now(),
+                level: 'error',
+                message: `Notion作成エラー: ${notionError.message}`,
+              }]);
+            }
+
+            // Update progress
+            step.progress = Math.round(((i + 1) / totalListings) * 100);
+            step.details = `${i + 1} / ${totalListings} ページ処理済み (${successfulCreations}件成功)`;
+            setSession({ ...session });
+            
+            await new Promise(resolve => setTimeout(resolve, 500)); // Avoid rate limits
+          }
+
+          step.evidence = `${successfulCreations}/${totalListings}件のNotionページを作成`;
+          
+          setLogs(prev => [...prev, {
+            id: `log-${Date.now()}-notion-complete`,
+            timestamp: Date.now(),
+            level: successfulCreations === totalListings ? 'success' : 'warn',
+            message: `Notion統合完了: ${successfulCreations}/${totalListings}件のページを作成`,
+          }]);
+
+        } else {
+          // Simulate other steps for now
+          for (let progress = 0; progress <= 100; progress += 50) {
+            step.progress = progress;
+            setSession({ ...session });
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+
+          setLogs(prev => [...prev, {
+            id: `log-${Date.now()}-${stepId}-done`,
+            timestamp: Date.now(),
+            level: 'success',
+            message: `${step.name}が完了しました`,
+          }]);
         }
 
         step.status = 'completed';
         step.endTime = Date.now();
         step.progress = 100;
-
-        setLogs(prev => [...prev, {
-          id: `log-${Date.now()}-${stepId}-done`,
-          timestamp: Date.now(),
-          level: 'success',
-          message: `${step.name}が完了しました`,
-        }]);
 
         setSession({ ...session });
         await new Promise(resolve => setTimeout(resolve, 200));

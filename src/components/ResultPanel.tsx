@@ -243,18 +243,84 @@ export default function ResultPanel({ session }: ResultPanelProps) {
             </div>
             <h4 className="font-semibold text-green-900">処理完了</h4>
           </div>
-          <p className="text-sm text-green-800 mb-4">
-            {session.listings.length}件の物件がNotionデータベースに登録されました
-          </p>
+
+          {/* Show Notion integration results */}
+          {(() => {
+            const notionStep = session.steps.find(s => s.id === 'notion');
+            const notionSuccessful = notionStep?.evidence?.includes('件のNotionページを作成');
+            
+            return (
+              <div className="mb-4">
+                <p className="text-sm text-green-800 mb-2">
+                  {session.listings.length}件の物件情報を抽出しました
+                </p>
+                
+                {notionStep && (
+                  <div className="bg-white rounded-lg p-3 border border-green-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      {notionSuccessful ? (
+                        <>
+                          <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-sm font-medium text-green-800">Notion統合: 成功</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-sm font-medium text-yellow-800">Notion統合: 部分的</span>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {notionStep.evidence || 'Notion統合の詳細情報はありません'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
-              Notionで確認
-            </button>
-            <button className="px-4 py-2 bg-white text-green-600 border border-green-600 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium">
-              PDF出力
-            </button>
+            {(() => {
+              const notionStep = session.steps.find(s => s.id === 'notion');
+              const hasNotionPages = notionStep?.evidence?.includes('件のNotionページを作成');
+              
+              return (
+                <>
+                  <button 
+                    onClick={() => {
+                      if (hasNotionPages) {
+                        // Try to open Notion workspace
+                        window.open('https://notion.so', '_blank');
+                      } else {
+                        alert('Notionページの作成に失敗しました。ログを確認してください。');
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+                      hasNotionPages 
+                        ? 'bg-green-600 text-white hover:bg-green-700' 
+                        : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                    }`}
+                    disabled={!hasNotionPages}
+                  >
+                    {hasNotionPages ? 'Notionで確認' : 'Notion統合失敗'}
+                  </button>
+                  
+                  <button 
+                    onClick={() => {
+                      alert('PDF出力機能は近日実装予定です');
+                    }}
+                    className="px-4 py-2 bg-white text-green-600 border border-green-600 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium"
+                  >
+                    PDF出力
+                  </button>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
