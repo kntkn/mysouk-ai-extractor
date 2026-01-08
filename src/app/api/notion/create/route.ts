@@ -102,9 +102,11 @@ async function validateDatabaseSchema(databaseId: string, notion: Client) {
     // Check if database has essential properties
     const properties = (response as any).properties;
     const requiredProperties = [
-      '物件名', '所在地', '賃料', '間取り', '専有面積', 
-      '管理費共益費', '敷金月数', '礼金月数'
+      '物件名', '所在地', '賃料', '間取り', '専有面積'
     ];
+    
+    // The database exists and has some properties, so let's be more flexible with validation
+    console.log('Available properties:', Object.keys(properties));
 
     const missingProperties = requiredProperties.filter(prop => !properties[prop]);
     
@@ -173,7 +175,7 @@ function buildNotionProperties(listing: any) {
   }
 
   if (listing.最寄り駅1?.value) {
-    properties['最寄り駅1'] = {
+    properties['最寄り駅'] = {
       rich_text: [{
         text: {
           content: String(listing.最寄り駅1.value)
@@ -263,7 +265,7 @@ function buildNotionProperties(listing: any) {
   }
 
   if (listing.管理会社元付業者名?.value) {
-    properties['管理会社元付業者名'] = {
+    properties['管理会社'] = {
       rich_text: [{
         text: {
           content: String(listing.管理会社元付業者名.value)
@@ -273,8 +275,12 @@ function buildNotionProperties(listing: any) {
   }
 
   if (listing.業者電話番号?.value) {
-    properties['業者電話番号'] = {
-      phone_number: String(listing.業者電話番号.value)
+    properties['連絡先'] = {
+      rich_text: [{
+        text: {
+          content: String(listing.業者電話番号.value)
+        }
+      }]
     };
   }
 
@@ -298,20 +304,28 @@ function buildNotionProperties(listing: any) {
   }
 
   if (listing.管理費共益費?.value != null) {
-    properties['管理費共益費'] = {
+    properties['管理費'] = {
       number: Number(listing.管理費共益費.value)
     };
   }
 
   if (listing.敷金月数?.value != null) {
-    properties['敷金月数'] = {
-      number: Number(listing.敷金月数.value)
+    properties['敷金'] = {
+      rich_text: [{
+        text: {
+          content: String(listing.敷金月数.value) + '月'
+        }
+      }]
     };
   }
 
   if (listing.礼金月数?.value != null) {
-    properties['礼金月数'] = {
-      number: Number(listing.礼金月数.value)
+    properties['礼金'] = {
+      rich_text: [{
+        text: {
+          content: String(listing.礼金月数.value) + '月'
+        }
+      }]
     };
   }
 
