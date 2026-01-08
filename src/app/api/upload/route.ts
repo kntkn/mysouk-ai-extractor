@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { put } from '@vercel/blob'; // Disabled for minimal deployment
+import { put } from '@vercel/blob';
 import { v4 as uuidv4 } from 'uuid';
-// const pdfParse = require('pdf-parse'); // Disabled for minimal deployment
+const pdfParse = require('pdf-parse');
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,24 +22,22 @@ export async function POST(request: NextRequest) {
       try {
         const buffer = Buffer.from(await file.arrayBuffer());
         
-        // Upload original PDF to blob storage - disabled for minimal deployment
-        // const blob = await put(`${sessionId}/${file.name}`, buffer, {
-        //   access: 'public',
-        // });
-        const blob = { url: `https://example.com/mock-url/${file.name}` }; // Mock blob for minimal deployment
+        // Upload original PDF to blob storage
+        const blob = await put(`${sessionId}/${file.name}`, buffer, {
+          access: 'public',
+        });
 
-        // Parse PDF for basic info - disabled for minimal deployment
-        // const pdfData = await pdfParse(buffer);
-        // const pageCount = pdfData.numpages;
-        const pageCount = 1; // Mock for minimal deployment
+        // Parse PDF for text content
+        const pdfData = await pdfParse(buffer);
+        const pageCount = pdfData.numpages;
+        const textContent = pdfData.text || '';
 
         // For now, skip image conversion and focus on text analysis
-        // TODO: Implement PDF to image conversion in next phase
         const images: any[] = [];
 
-        // Detect potential property listings in each page - mock for minimal deployment
+        // Detect potential property listings in each page
         const candidates = await detectListingCandidates(
-          "物件名: テストマンション\n所在地: 東京都渋谷区\n賃料: 120,000円", // Mock text for minimal deployment
+          textContent,
           images,
           pageCount
         );
@@ -51,7 +49,7 @@ export async function POST(request: NextRequest) {
           pages: pageCount,
           candidates,
           images: [], // Will be implemented in next phase
-          textContent: "物件名: テストマンション\n所在地: 東京都渋谷区\n賃料: 120,000円", // Mock text for minimal deployment
+          textContent: textContent.substring(0, 5000), // First 5000 chars for extraction
         };
 
         processedFiles.push(processedFile);

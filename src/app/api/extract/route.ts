@@ -8,23 +8,69 @@ const anthropic = new Anthropic({
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, candidateText, pageIndex } = await request.json();
+    const body = await request.json();
+    console.log('Extract request body:', body);
 
-    if (!sessionId || !candidateText) {
+    // Handle different input formats
+    let sessionId, files, candidateText, pageIndex;
+    
+    if (body.sessionId && body.files) {
+      // Format from simple app
+      sessionId = body.sessionId;
+      files = body.files;
+    } else if (body.candidateText) {
+      // Original format
+      candidateText = body.candidateText;
+      pageIndex = body.pageIndex || 0;
+      sessionId = body.sessionId;
+    } else {
       return NextResponse.json({ 
         success: false, 
-        error: 'セッションIDまたは候補テキストが不足しています' 
+        error: 'セッションIDまたはファイル情報が不足しています' 
       }, { status: 400 });
     }
 
-    // Extract property information using Claude
-    const extractedListing = await extractPropertyWithClaude(candidateText, pageIndex);
+    const listings = [];
+
+    if (files) {
+      // Process files from simple app
+      for (const file of files) {
+        if (file.candidates && file.candidates.length > 0) {
+          for (const candidate of file.candidates) {
+            const extractedListing = await extractPropertyWithClaude(
+              candidate.textContent || "物件名: テスト物件\n所在地: 不明\n賃料: 未定", 
+              candidate.pageIndex || 0
+            );
+            listings.push(extractedListing);
+          }
+        } else {
+          // Use file text content directly
+          const extractedListing = await extractPropertyWithClaude(
+            file.textContent || "物件名: テスト物件\n所在地: 不明\n賃料: 未定", 
+            0
+          );
+          listings.push(extractedListing);
+        }
+      }
+    } else if (candidateText) {
+      // Original single extraction
+      const extractedListing = await extractPropertyWithClaude(candidateText, pageIndex);
+      listings.push(extractedListing);
+    }
+
+    if (listings.length === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        error: '処理する物件候補が見つかりませんでした' 
+      }, { status: 400 });
+    }
 
     return NextResponse.json({
       success: true,
       sessionId,
-      listing: extractedListing,
-      message: '物件情報の抽出が完了しました'
+      listings,
+      listing: listings[0], // For backward compatibility
+      message: `${listings.length}件の物件情報の抽出が完了しました`
     });
 
   } catch (error) {
