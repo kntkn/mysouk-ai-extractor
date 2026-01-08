@@ -504,8 +504,119 @@ async function processFiles(
             message: `Notion統合完了: ${successfulCreations}/${totalListings}件のページを作成`,
           }]);
 
+        } else if (stepId === 'images') {
+          // Real image extraction and classification
+          let processedFiles = 0;
+          const totalFiles = session.files.length;
+          const allExtractedImages = [];
+
+          for (const file of session.files) {
+            try {
+              setLogs(prev => [...prev, {
+                id: `log-${Date.now()}-images-extract`,
+                timestamp: Date.now(),
+                level: 'info',
+                message: `画像抽出開始: ${file.name}`,
+              }]);
+
+              const imageResponse = await fetch('/api/images/extract', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  sessionId: session.id,
+                  fileUrl: file.url,
+                  fileName: file.name,
+                }),
+              });
+
+              if (imageResponse.ok) {
+                const imageResult = await imageResponse.json();
+                
+                if (imageResult.success && imageResult.images) {
+                  // Update file with extracted images
+                  file.images = imageResult.images;
+                  allExtractedImages.push(...imageResult.images);
+                  
+                  // Log classification summary
+                  const typeCount = imageResult.images.reduce((acc: any, img: any) => {
+                    acc[img.type] = (acc[img.type] || 0) + 1;
+                    return acc;
+                  }, {});
+                  
+                  const typeSummary = Object.entries(typeCount)
+                    .map(([type, count]) => `${type}:${count}枚`)
+                    .join(', ');
+
+                  setLogs(prev => [...prev, {
+                    id: `log-${Date.now()}-images-success`,
+                    timestamp: Date.now(),
+                    level: 'success',
+                    message: `✓ ${file.name}: ${imageResult.images.length}枚抽出・分類完了`,
+                    details: { typeSummary }
+                  }]);
+                } else {
+                  setLogs(prev => [...prev, {
+                    id: `log-${Date.now()}-images-error`,
+                    timestamp: Date.now(),
+                    level: 'warn',
+                    message: `⚠ ${file.name}: 画像抽出失敗 - ${imageResult.error}`,
+                  }]);
+                  
+                  // Set empty images array for failed extractions
+                  file.images = [];
+                }
+              } else {
+                const errorText = await imageResponse.text();
+                setLogs(prev => [...prev, {
+                  id: `log-${Date.now()}-images-error`,
+                  timestamp: Date.now(),
+                  level: 'error',
+                  message: `画像抽出API エラー: ${errorText}`,
+                }]);
+                
+                file.images = [];
+              }
+            } catch (imageError) {
+              setLogs(prev => [...prev, {
+                id: `log-${Date.now()}-images-error`,
+                timestamp: Date.now(),
+                level: 'error',
+                message: `画像抽出エラー: ${imageError.message}`,
+              }]);
+              
+              file.images = [];
+            }
+
+            processedFiles++;
+            step.progress = Math.round((processedFiles / totalFiles) * 100);
+            step.details = `${processedFiles} / ${totalFiles} ファイル処理済み`;
+            setSession({ ...session });
+            
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Allow time for processing
+          }
+
+          // Final image extraction summary
+          const imageTypeStats = allExtractedImages.reduce((acc: any, img: any) => {
+            acc[img.type] = (acc[img.type] || 0) + 1;
+            return acc;
+          }, {});
+
+          const highConfidenceImages = allExtractedImages.filter(img => img.confidence > 0.7);
+          
+          step.evidence = `${allExtractedImages.length}枚抽出 (高信頼度: ${highConfidenceImages.length}枚)`;
+          
+          setLogs(prev => [...prev, {
+            id: `log-${Date.now()}-images-complete`,
+            timestamp: Date.now(),
+            level: 'success',
+            message: `画像抽出・分類完了: ${allExtractedImages.length}枚処理`,
+            details: { imageTypeStats }
+          }]);
+
         } else {
-          // Simulate other steps for now
+          // Simulate other steps
           for (let progress = 0; progress <= 100; progress += 50) {
             step.progress = progress;
             setSession({ ...session });

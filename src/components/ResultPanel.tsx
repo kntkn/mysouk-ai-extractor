@@ -73,7 +73,7 @@ export default function ResultPanel({ session }: ResultPanelProps) {
                   </div>
                 </div>
                 <div className="text-xs text-gray-500">
-                  {file.candidates.length} 物件候補
+                  {file.candidates.length} 物件候補 | {file.images?.length || 0} 画像
                 </div>
               </div>
             ))}
@@ -231,6 +231,115 @@ export default function ResultPanel({ session }: ResultPanelProps) {
           </div>
         )}
       </div>
+
+      {/* Image Gallery */}
+      {session.files.some(file => file.images && file.images.length > 0) && (
+        <div className="bg-white rounded-lg border p-4">
+          <h4 className="font-semibold text-gray-900 mb-3">抽出画像ギャラリー</h4>
+          
+          {session.files.map(file => {
+            if (!file.images || file.images.length === 0) return null;
+            
+            // Group images by type
+            const imagesByType = file.images.reduce((acc: any, img) => {
+              if (!acc[img.type]) acc[img.type] = [];
+              acc[img.type].push(img);
+              return acc;
+            }, {});
+
+            const typeLabels: Record<string, string> = {
+              floorplan: '🏗️ 間取り図',
+              exterior: '🏢 外観',
+              interior: '🛋️ 室内',
+              bath: '🛁 浴室',
+              kitchen: '🍳 キッチン',
+              view: '🌅 眺望',
+              map: '🗺️ 地図',
+              logo: '🏢 ロゴ',
+              other: '📄 その他'
+            };
+
+            return (
+              <div key={file.id} className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center">
+                    <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <h5 className="font-medium text-gray-900">{file.name}</h5>
+                  <span className="text-xs text-gray-500">
+                    {file.images.length}枚の画像
+                  </span>
+                </div>
+
+                {Object.entries(imagesByType).map(([type, images]: [string, any[]]) => (
+                  <div key={type} className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-medium text-gray-700">
+                        {typeLabels[type] || type}
+                      </span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                        {images.length}枚
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                      {images.map((image, index) => (
+                        <div key={image.id} className="relative group">
+                          <img 
+                            src={image.url}
+                            alt={`${type} ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border hover:shadow-lg transition-shadow cursor-pointer"
+                            onClick={() => window.open(image.url, '_blank')}
+                          />
+                          
+                          {/* Confidence indicator */}
+                          <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${
+                            image.confidence > 0.8 ? 'bg-green-500' :
+                            image.confidence > 0.6 ? 'bg-yellow-500' :
+                            image.confidence > 0.4 ? 'bg-orange-500' : 'bg-red-500'
+                          }`} title={`信頼度: ${Math.round(image.confidence * 100)}%`}></div>
+                          
+                          {/* Page indicator */}
+                          <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded">
+                            P{image.pageIndex + 1}
+                          </div>
+                          
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
+                            <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Image statistics */}
+                <div className="bg-gray-50 rounded-lg p-3 mt-3">
+                  <h6 className="text-sm font-medium text-gray-900 mb-2">分類統計</h6>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(imagesByType).map(([type, images]: [string, any[]]) => {
+                      const avgConfidence = images.reduce((sum, img) => sum + img.confidence, 0) / images.length;
+                      return (
+                        <span key={type} className="text-xs bg-white px-2 py-1 rounded border">
+                          {typeLabels[type] || type}: {images.length}枚 
+                          <span className="text-gray-500 ml-1">
+                            ({Math.round(avgConfidence * 100)}%)
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Final Results */}
       {session.status === 'completed' && (
