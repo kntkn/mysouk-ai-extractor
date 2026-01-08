@@ -114,9 +114,10 @@ async function validateDatabaseSchema(databaseId: string, notion: Client) {
     ];
     
     // The database exists and has some properties, so let's be more flexible with validation
-    console.log('Available properties:', Object.keys(properties));
+    console.log('Properties object:', properties);
+    console.log('Available properties:', properties ? Object.keys(properties) : 'properties is null/undefined');
 
-    const missingProperties = requiredProperties.filter(prop => !properties[prop]);
+    const missingProperties = properties ? requiredProperties.filter(prop => !properties[prop]) : requiredProperties;
     
     if (missingProperties.length > 0) {
       throw new Error(`データベースに必要なプロパティが不足しています: ${missingProperties.join(', ')}`);
