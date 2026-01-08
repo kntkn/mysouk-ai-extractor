@@ -2,34 +2,36 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Client } from '@notionhq/client';
 import { PropertyListing, NotionPageCreationResult } from '@/types';
 
-// Debug and sanitize the Notion API token
-const rawToken = process.env.NOTION_API_TOKEN;
+function getNotionClient() {
+  // Debug and sanitize the Notion API token
+  const rawToken = process.env.NOTION_API_TOKEN;
 
-if (!rawToken) {
-  throw new Error('NOTION_API_TOKEN environment variable is not set');
+  if (!rawToken) {
+    throw new Error('NOTION_API_TOKEN environment variable is not set');
+  }
+
+  // Aggressively clean the token - handle any possible format issues
+  let cleanToken = rawToken;
+
+  // Remove any "y\n" prefix
+  if (cleanToken.startsWith('y\n')) {
+    cleanToken = cleanToken.slice(2);
+  }
+
+  // Remove all types of whitespace and control characters
+  cleanToken = cleanToken.replace(/[\r\n\t\s\x00-\x1f\x7f]/g, '');
+
+  // Ensure it starts with "ntn_"
+  if (!cleanToken.startsWith('ntn_')) {
+    throw new Error(`Invalid token format. Token should start with 'ntn_', but got: ${cleanToken.slice(0, 10)}...`);
+  }
+
+  console.log(`Token length: ${cleanToken.length}, starts with: ${cleanToken.slice(0, 10)}`);
+
+  return new Client({
+    auth: cleanToken,
+  });
 }
-
-// Aggressively clean the token - handle any possible format issues
-let cleanToken = rawToken;
-
-// Remove any "y\n" prefix
-if (cleanToken.startsWith('y\n')) {
-  cleanToken = cleanToken.slice(2);
-}
-
-// Remove all types of whitespace and control characters
-cleanToken = cleanToken.replace(/[\r\n\t\s\x00-\x1f\x7f]/g, '');
-
-// Ensure it starts with "ntn_"
-if (!cleanToken.startsWith('ntn_')) {
-  throw new Error(`Invalid token format. Token should start with 'ntn_', but got: ${cleanToken.slice(0, 10)}...`);
-}
-
-console.log(`Token length: ${cleanToken.length}, starts with: ${cleanToken.slice(0, 10)}`);
-
-const notion = new Client({
-  auth: cleanToken,
-});
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,11 +56,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    const notion = getNotionClient();
+
     // Validate database schema
-    await validateDatabaseSchema(dbId);
+    await validateDatabaseSchema(dbId, notion);
 
     // Create Notion page
-    const result = await createNotionPage(listing, dbId);
+    const result = await createNotionPage(listing, dbId, notion);
 
     return NextResponse.json(result);
 
@@ -89,7 +93,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function validateDatabaseSchema(databaseId: string) {
+async function validateDatabaseSchema(databaseId: string, notion: Client) {
   try {
     const response = await notion.databases.retrieve({
       database_id: databaseId,
@@ -116,7 +120,8 @@ async function validateDatabaseSchema(databaseId: string) {
 
 async function createNotionPage(
   listing: PropertyListing, 
-  databaseId: string
+  databaseId: string,
+  notion: Client
 ): Promise<NotionPageCreationResult> {
   try {
     // Build properties object for Notion page
