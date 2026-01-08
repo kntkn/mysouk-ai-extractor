@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+// import { put } from '@vercel/blob'; // Disabled for minimal deployment
 import { v4 as uuidv4 } from 'uuid';
 // const pdfParse = require('pdf-parse'); // Disabled for minimal deployment
 
@@ -22,10 +22,11 @@ export async function POST(request: NextRequest) {
       try {
         const buffer = Buffer.from(await file.arrayBuffer());
         
-        // Upload original PDF to blob storage
-        const blob = await put(`${sessionId}/${file.name}`, buffer, {
-          access: 'public',
-        });
+        // Upload original PDF to blob storage - disabled for minimal deployment
+        // const blob = await put(`${sessionId}/${file.name}`, buffer, {
+        //   access: 'public',
+        // });
+        const blob = { url: `https://example.com/mock-url/${file.name}` }; // Mock blob for minimal deployment
 
         // Parse PDF for basic info - disabled for minimal deployment
         // const pdfData = await pdfParse(buffer);
