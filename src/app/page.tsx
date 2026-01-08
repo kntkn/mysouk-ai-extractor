@@ -408,8 +408,8 @@ async function processFiles(
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    // Process remaining steps (normalize, images, notion, pdf, complete)
-    const remainingSteps = ['normalize', 'images', 'notion', 'pdf', 'complete'];
+    // Process remaining steps (normalize, notion, complete) - images & pdf disabled for testing
+    const remainingSteps = ['normalize', 'notion', 'complete'];
     for (const stepId of remainingSteps) {
       const step = steps.find(s => s.id === stepId);
       if (step) {
